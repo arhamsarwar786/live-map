@@ -1,62 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="./">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="flutter_application_3">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>flutter_application_3</title>
-  <link rel="manifest" href="manifest.json">
-
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = '3784090639';
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-  <script src="main.dart.js" type="application/javascript"></script>  
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEuNTI_AFxT0rYhuPfYFyunRCEmZVRFqs"></script>
-
-</head>
-<body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
+    <meta charset="UTF-8">
+    <title>Map with Dynamic Polyline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
         }
-      });
-    });
-  </script>
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEuNTI_AFxT0rYhuPfYFyunRCEmZVRFqs&callback=initMap"
+        async defer></script>
+    <script>
+        function initMap() {
+            let map; // Define the map variable globally
+            let directionsService;
+            let directionsRenderer;
+
+            // Function to make an API request and draw the polyline
+            function makeApiRequestAndDrawPolyline() {
+                let apiUrl = "http://pos.dubaiwebdesigncompany.net/api/technician_location_api";
+                let payload = { "APP_ID": "xV0ECdnJIO", "TOKEN": "jSzaYTk4Uk0GYqilRod4", "task_id": "1", "technician_id": "2" };
+
+                fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+
+                        if (data.code == "202") {
+                            const customerLatLng = splitStringOnComma(data.technician_location[0].customer_lat_long);
+                            const technicianLatLng = splitStringOnComma(data.technician_location[0].technician_lat_long);
+
+                            const taskID = getURLParameter('taskID');
+                            const technicianID = getURLParameter('technicianID');
+
+                            console.log('Task ID:', taskID);
+                            console.log('Technician ID:', technicianID);
+
+                            // Initialize the map if it doesn't exist
+                            if (!map) {
+                                map = new google.maps.Map(document.getElementById('map'), {
+                                    center: { lat: Number(technicianLatLng[0]), lng: Number(technicianLatLng[1]) },
+                                    zoom: 14,
+                                });
+
+                                directionsService = new google.maps.DirectionsService();
+                                directionsRenderer = new google.maps.DirectionsRenderer({
+                                    map: map,
+                                });
+                            }
+
+                            const start = new google.maps.LatLng(Number(technicianLatLng[0]), Number(technicianLatLng[1]));
+                            const end = new google.maps.LatLng(Number(customerLatLng[0]), Number(customerLatLng[1]));
+
+                            const request = {
+                                origin: start,
+                                destination: end,
+                                travelMode: google.maps.TravelMode.DRIVING,
+                            };
+
+                            directionsService.route(request, function (result, status) {
+                                if (status === google.maps.DirectionsStatus.OK) {
+                                    directionsRenderer.setDirections(result);
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching API data:', error);
+                    });
+            }
+
+            // Call the function to make the API request and draw the polyline initially
+            makeApiRequestAndDrawPolyline();
+
+            // Use setInterval to call the function every 5 seconds
+            setInterval(makeApiRequestAndDrawPolyline, 50000); // 5000 milliseconds = 5 seconds
+        }
+
+        function splitStringOnComma(inputString) {
+            return inputString.split(',');
+        }
+
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+    </script>
 </body>
+
 </html>
