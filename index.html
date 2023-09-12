@@ -26,11 +26,27 @@
             let map; // Define the map variable globally
             let directionsService;
             let directionsRenderer;
+            const taskID = getURLParameter('taskID');
+                            const technicianID = getURLParameter('technicianID');
 
+                            if (!taskID) {
+                            alert("Please! add Task ID");
+                            }
+                            if (!technicianID) {
+                                alert("Please! add Technician ID");
+                            }
+                            else{
+                                   // Call the function to make the API request and draw the polyline initially
+            makeApiRequestAndDrawPolyline();
+
+// Use setInterval to call the function every 5 seconds
+setInterval(makeApiRequestAndDrawPolyline, 50000); // 5000 milliseconds = 5 seconds
+                            }
             // Function to make an API request and draw the polyline
             function makeApiRequestAndDrawPolyline() {
+                
                 let apiUrl = "https://pos.dubaiwebdesigncompany.net/api/technician_location_api";
-                let payload = { "APP_ID": "xV0ECdnJIO", "TOKEN": "jSzaYTk4Uk0GYqilRod4", "task_id": "1", "technician_id": "2" };
+                let payload = { "APP_ID": "xV0ECdnJIO", "TOKEN": "jSzaYTk4Uk0GYqilRod4", "task_id": taskID, "technician_id": technicianID };
 
                 fetch(apiUrl, {
                     method: "POST",
@@ -47,8 +63,7 @@
                             const customerLatLng = splitStringOnComma(data.technician_location[0].customer_lat_long);
                             const technicianLatLng = splitStringOnComma(data.technician_location[0].technician_lat_long);
 
-                            const taskID = getURLParameter('taskID');
-                            const technicianID = getURLParameter('technicianID');
+                           
 
                             console.log('Task ID:', taskID);
                             console.log('Technician ID:', technicianID);
@@ -87,11 +102,7 @@
                     });
             }
 
-            // Call the function to make the API request and draw the polyline initially
-            makeApiRequestAndDrawPolyline();
-
-            // Use setInterval to call the function every 5 seconds
-            setInterval(makeApiRequestAndDrawPolyline, 50000); // 5000 milliseconds = 5 seconds
+         
         }
 
         function splitStringOnComma(inputString) {
