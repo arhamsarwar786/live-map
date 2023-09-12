@@ -35,7 +35,7 @@
                             if (!technicianID) {
                                 alert("Please! add Technician ID");
                             }
-                            else{
+                            if(taskID && technicianID){
                                    // Call the function to make the API request and draw the polyline initially
             makeApiRequestAndDrawPolyline();
 
